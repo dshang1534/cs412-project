@@ -31,6 +31,9 @@ with open("categories.txt", "r") as f:
 content = [x.strip() for x in content] 
 content = [x.split(";") for x in content] 
 
+
+minisup = 771
+
 list_entry=[]  
 for i in range(0,len(content)):
     list_entry += content[i]
@@ -44,12 +47,13 @@ for item in list_entry:
     else:
         freq1[item] = 1
 
-freq1_reduced = {k:v for (k,v) in freq1.items() if v>771}
+freq1_reduced = {(k,):v for (k,v) in freq1.items() if v> minisup}
 
 
-with open('patterns.txt', 'w') as f:
+with open('patterns_1.txt', 'w') as f:
     for key, value in freq1_reduced.items():
-     print(str(value)+':'+str(key),file=f)
+     print(str(value)+':'+str(';'.join(key)),file=f)
+
 
     
 #finish in 0.4065 seconds   
@@ -66,83 +70,53 @@ with open('patterns.txt', 'w') as f:
  2851:Fast Food;Restaurants
 """
 #--------------------------------------------------# 
-#2 item frequent sets
-from itertools import combinations 
+# >1 item frequent sets
+from itertools import combinations
 
-comb2 = list(combinations(list(freq1_reduced.keys()),2)) 
+freq_sets=freq1_reduced
+freq_1=freq1_reduced
 
-freq2 = {}
-for i in range(0,len(comb2)):
-    for j in range(0,len(content)):
-        #To check if the first list (big) contains ALL elements in the second list (small)
-        if (all(elem in content[j] for elem in list(comb2[i]))):
-            if comb2[i] in freq2:
-                freq2[comb2[i]] += 1  
-            else:
-                freq2[comb2[i]] = 1
+for num in range(2,10):
+    freq_1_list = [item for t in list(freq_1.keys()) for item in t]
+    comb2 = list(combinations(set(freq_1_list),num))    
+    
+    #
+    freq2 = {}
+    for i in range(0,len(list(comb2))):
+        ind=0
+        for j in range(0,len(list(freq_1.keys()))):
+            if all(elem in comb2[i] for elem in list(freq_1.keys())[j]):
+                ind += 1
+        if ind==num:
+            for k in range(0,len(content)):
+                if (all(elem in content[k] for elem in list(comb2[i]))):
+                    if comb2[i] in freq2:
+                        freq2[comb2[i]] += 1
+                    else:
+                        freq2[comb2[i]] = 1   
+    
+    freq2_reduced = {k:v for (k,v) in freq2.items() if v> minisup}
+    if freq2_reduced == {}:
+        break
+    freq_sets = {**freq_sets,**freq2_reduced}
+    freq_1=freq2_reduced
+    
+print('the maximum length frequent item sets contain', num-1, 'items')
 
-freq2_reduced = {k:v for (k,v) in freq2.items() if v>771}
 
 
-with open('patterns.txt', 'a') as f:
-    for key, value in freq2_reduced.items():
+with open('patterns_all.txt', 'w') as f:
+    for key, value in freq_sets.items():
        print(str(value)+':'+str(';'.join(key)),file=f)
 
-#finish in 78.9789 seconds
-
-#--------------------------------------------------#
-#3 item frequent sets
-import time
-tic = time.perf_counter()
-freq2_reduced_list = [item for t in list(freq2_reduced.keys()) for item in t]
-comb3 = list(combinations(set(freq2_reduced_list),3)) 
 
 
-freq3 = {}
-for i in range(0,len(list(comb3))):
-    ind=0
-    for j in range(0,len(list(freq2_reduced.keys()))):
-        if all(elem in comb3[i] for elem in list(freq2_reduced.keys())[j]):
-            ind += 1
-    if ind==3:
-        for k in range(0,len(content)):
-            if (all(elem in content[k] for elem in list(comb3[i]))):
-                if comb3[i] in freq3:
-                    freq3[comb3[i]] += 1
-                else:
-                    freq3[comb3[i]] = 1
-
-freq3_reduced = {k:v for (k,v) in freq3.items() if v>771}
 
 
-with open('patterns.txt', 'a') as f:
-    for key, value in freq3_reduced.items():
-       print(str(value)+':'+str(';'.join(key)),file=f)
-
-#finish in 1.2330 seconds
-
-#--------------------------------------------------#
-#4 item frequent sets
-
-freq3_reduced_list = [item for t in list(freq3_reduced.keys()) for item in t]
-comb4 = list(combinations(set(freq3_reduced_list),4)) 
 
 
-freq4 = {}
-for i in range(0,len(list(comb4))):
-    ind=0
-    for j in range(0,len(list(freq2_reduced.keys()))):
-        if all(elem in comb4[i] for elem in list(freq2_reduced.keys())[j]):
-            ind += 1
-    if ind==4:
-        for k in range(0,len(content)):
-            if (all(elem in content[k] for elem in list(comb4[i]))):
-                if comb4[i] in freq4:
-                    freq4[comb4[i]] += 1
-                else:
-                    freq4[comb4[i]] = 1
 
-freq4_reduced = {k:v for (k,v) in freq4.items() if v>771}
 
-freq4_reduced=={}
-#True so stop
+
+
+
